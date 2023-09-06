@@ -3,11 +3,7 @@ module.exports = {
     es2021: true,
     node: true,
   },
-  extends: [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
-    "plugin:boundaries/recommended",
-  ],
+  extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended", "plugin:boundaries/recommended"],
   parser: "@typescript-eslint/parser",
   parserOptions: {
     ecmaVersion: 12,
@@ -60,11 +56,7 @@ module.exports = {
     "key-spacing": ["error", { beforeColon: false }],
     "padded-blocks": ["error", "never"],
     "no-multiple-empty-lines": ["error", { max: 1 }],
-    "lines-between-class-members": [
-      "error",
-      "always",
-      { exceptAfterSingleLine: true },
-    ],
+    "lines-between-class-members": ["error", "always", { exceptAfterSingleLine: true }],
     "space-before-function-paren": [
       "error",
       {
@@ -86,10 +78,7 @@ module.exports = {
         },
       },
     ],
-    "@typescript-eslint/type-annotation-spacing": [
-      "error",
-      { after: true, before: false },
-    ],
+    "@typescript-eslint/type-annotation-spacing": ["error", { after: true, before: false }],
     "arrow-spacing": ["error", { before: true, after: true }],
     "no-console": "warn",
     "boundaries/element-types": [

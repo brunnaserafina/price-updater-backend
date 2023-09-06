@@ -1,14 +1,14 @@
 {
   "name": "price-updater-backend",
   "version": "1.0.0",
-  "type": "module",
   "description": "Ferramenta de atualização de preços de produtos e-commerce",
-  "main": "dist/app.js",
+  "main": "dist/server.js",
   "scripts": {
     "prebuild": "rm -rf dist",
-    "build": "tsc -p tsconfig.json",
-    "start": "node dist/app.js",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/server.js",
     "lint": "eslint .",
+    "lint:staged": "lint-staged",
     "test": "NODE_ENV=test jest --passWithNoTests --runInBand",
     "test:coverage": "NODE_ENV=test jest --passWithNoTests --runInBand --coverage --collectCoverageFrom='./src/**'",
     "test:watch": "jest --watch --passWithNoTests --runInBand",
@@ -16,13 +16,17 @@
     "test:seed": "npm run test:load-envs prisma db seed",
     "dev:load-envs": "dotenv -e .env.development",
     "dev:seed": "npm run dev:load-envs prisma db seed",
-    "dev": "NODE_ENV=development nodemon --watch 'src/' --exec ts-node -r tsconfig-paths/register ./src/app.ts -e ts"
+    "dev": "NODE_ENV=development nodemon --watch 'src/' --exec ts-node -r tsconfig-paths/register ./src/server.ts -e ts"
   },
   "keywords": [],
   "author": "Brunna Serafina",
   "license": "ISC",
+  "prisma": {
+    "seed": "npm run dev:load-envs -- ts-node prisma/seed.ts"
+  },
   "dependencies": {
     "axios": "^1.5.0",
+    "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "http-status": "^1.7.0"
