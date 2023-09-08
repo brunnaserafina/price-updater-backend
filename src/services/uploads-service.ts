@@ -1,4 +1,4 @@
-import { InterfaceProcessProduct, InterfaceProductCsv } from "./../protocols";
+
 import csv from "csvtojson";
 import { findProductByCode, updateSalesPriceByProductCode } from "@/repositories/products-repository";
 import { cannotUpdateProductError } from "@/errors/cannot-update-product-error";
@@ -14,7 +14,7 @@ async function validateAndConvertCsvToJson(buffer: Buffer) {
 
   const expectedHeaders = ["product_code", "new_price"];
   const csvHeaders = Object.keys(jsonArray[0]);
-  
+
   if (JSON.stringify(csvHeaders) !== JSON.stringify(expectedHeaders)) {
     throw invalidHeadersCsvError();
   }
