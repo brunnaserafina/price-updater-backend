@@ -17,11 +17,7 @@ export async function productsValidation(req: BufferRequest, res: Response) {
 
     return res.status(httpStatus.OK).json(validateDataProducts);
   } catch (error) {
-    if (error.name === "InvalidFileError") {
-      return res.status(httpStatus.UNSUPPORTED_MEDIA_TYPE).send(error.message);
-    }
-
-    return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ message: "arquivo não encontrado" });
+    return res.status(httpStatus.INTERNAL_SERVER_ERROR).send(error);
   }
 }
 
@@ -33,10 +29,6 @@ export async function productsUpdate(req: BufferRequest, res: Response) {
 
     return res.status(httpStatus.CREATED).send({ message: "Produtos atualizados com sucesso!" });
   } catch (error) {
-    if (error.name === "InvalidFileError") {
-      return res.status(httpStatus.UNSUPPORTED_MEDIA_TYPE).send(error.message);
-    }
-
     return res.status(httpStatus.UNPROCESSABLE_ENTITY).json({ message: "Dados inválidos" });
   }
 }

@@ -1,13 +1,16 @@
 import { NextFunction, Request, Response } from "express";
 import { invalidFileError } from "@/errors/invalid-file-error";
+import httpStatus from "http-status";
 
 export interface BufferRequest extends Request {
   buffer?: Buffer;
 }
 
-export async function csvValidateFile(req: BufferRequest, _res: Response, next: NextFunction) {
+export async function csvValidateFile(req: BufferRequest, res: Response, next: NextFunction) {
   try {
     const file = req.file;
+
+    if (file.mimetype !== "text/csv") throw invalidFileError();
 
     if (file) {
       const buffer = file.buffer;
@@ -16,6 +19,6 @@ export async function csvValidateFile(req: BufferRequest, _res: Response, next: 
       return next();
     }
   } catch (err) {
-    throw invalidFileError();
+    return res.status(httpStatus.UNSUPPORTED_MEDIA_TYPE).send(invalidFileError());
   }
 }
