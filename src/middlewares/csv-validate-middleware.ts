@@ -2,11 +2,11 @@ import { NextFunction, Request, Response } from "express";
 import { invalidFileError } from "@/errors/invalid-file-error";
 import httpStatus from "http-status";
 
-export interface BufferRequest extends Request {
+export interface FileRequest extends Request {
   buffer?: Buffer;
 }
 
-export async function csvValidateFile(req: BufferRequest, res: Response, next: NextFunction) {
+export async function csvValidateFile(req: FileRequest, res: Response, next: NextFunction) {
   try {
     const file = req.file;
 
