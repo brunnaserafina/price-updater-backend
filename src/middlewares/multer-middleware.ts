@@ -1,4 +1,3 @@
-//import { invalidFileError } from "@/errors/invalid-file-error";
 import multer from "multer";
 
 const multerConfig = multer();
