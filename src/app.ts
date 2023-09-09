@@ -1,14 +1,28 @@
-import express from "express";
+import express, { Express } from "express";
+import cors from "cors";
+import { connectDb, disconnectDb } from "./config/database";
+import { loadEnv } from "./config/envs";
+import uploadsRouter from "./routers/uploads-router";
 
-const server = express();
+loadEnv();
 
-const port = process.env.PORT || 5000;
+const app: Express = express();
 
-server.get("/status", (req, res) => {
-  res.send("Ok!");
-});
+app
+  .use(cors())
+  .use(express.json())
+  .get("/api/status", (req, res) => {
+    res.send("Ok!");
+  })
+  .use("/api/uploads", uploadsRouter);
 
-server.listen(port, () => {
-  /* eslint-disable-next-line no-console */
-  console.log("Running on port " + port);
-});
+export function init(): Promise<Express> {
+  connectDb();
+  return Promise.resolve(app);
+}
+
+export async function close(): Promise<void> {
+  await disconnectDb();
+}
+
+export default app;
