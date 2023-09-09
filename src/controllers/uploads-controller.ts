@@ -33,6 +33,10 @@ export async function productsUpdate(req: FileRequest, res: Response) {
 
     return res.status(httpStatus.CREATED).send({ message: "Produtos atualizados com sucesso!" });
   } catch (error) {
+    if (error.name === "InvalidHeadersCsvError" || error.name === "InvalidDataCsvError") {
+      return res.status(httpStatus.BAD_REQUEST).send({ message: error.message });
+    }
+
     if (error.name === "CannotUpdateProductError") {
       return res.status(httpStatus.UNPROCESSABLE_ENTITY).send({ message: error.message });
     }
