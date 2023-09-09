@@ -1,11 +1,11 @@
 import { prisma } from "@/config/database";
 import { packs, products } from "@prisma/client";
 
-export async function findProductByCode(code: number): Promise<products> {
+async function findProductByCode(code: number): Promise<products> {
   return prisma.products.findFirst({ where: { code } });
 }
 
-export async function updateSalesPriceByProductCode(code: number, newPrice: number): Promise<products> {
+async function updateSalesPriceByProductCode(code: number, newPrice: number): Promise<products> {
   return prisma.products.update({
     where: {
       code,
@@ -16,10 +16,19 @@ export async function updateSalesPriceByProductCode(code: number, newPrice: numb
   });
 }
 
-export async function findPackageByProductCode(code: number): Promise<packs[]> {
+async function findPackageByProductCode(code: number): Promise<packs[]> {
   return prisma.packs.findMany({ where: { pack_id: code } });
 }
 
-export async function findProductsInPackages(code: number): Promise<packs> {
+async function findProductsInPackages(code: number): Promise<packs> {
   return prisma.packs.findFirst({ where: { product_id: code } });
 }
+
+const productsRepository = {
+  findProductByCode,
+  updateSalesPriceByProductCode,
+  findPackageByProductCode,
+  findProductsInPackages,
+};
+
+export default productsRepository;

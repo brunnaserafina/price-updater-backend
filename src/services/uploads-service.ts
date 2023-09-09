@@ -1,28 +1,9 @@
-
-import csv from "csvtojson";
-import { findProductByCode, updateSalesPriceByProductCode } from "@/repositories/products-repository";
 import { cannotUpdateProductError } from "@/errors/cannot-update-product-error";
-import { invalidHeadersCsvError } from "@/errors/invalid-headers-csv-error";
-import { invalidDataCsvError } from "@/errors/invalid-data-csv-error";
+import { InterfaceProcessProduct, InterfaceProductCsv } from "./../protocols";
+import productsRepository from "@/repositories/products-repository";
+import { validateAndConvertCsvToJson } from "@/utils/validate-csv-and-convert-json";
 
-async function validateAndConvertCsvToJson(buffer: Buffer) {
-  const jsonArray = await csv().fromString(buffer.toString());
-
-  if (jsonArray.length === 0) {
-    throw invalidDataCsvError();
-  }
-
-  const expectedHeaders = ["product_code", "new_price"];
-  const csvHeaders = Object.keys(jsonArray[0]);
-
-  if (JSON.stringify(csvHeaders) !== JSON.stringify(expectedHeaders)) {
-    throw invalidHeadersCsvError();
-  }
-
-  return jsonArray;
-}
-
-function isPriceWithinPercentMargin(newPrice: number, olderPrice: number): string {
+function checkPriceWithinPercentMargin(newPrice: number, olderPrice: number): string {
   const percentMargin = 0.1; //10%
 
   const adjustmentGreaterThan10Percent = newPrice > olderPrice + olderPrice * percentMargin;
@@ -37,11 +18,62 @@ function isPriceWithinPercentMargin(newPrice: number, olderPrice: number): strin
   }
 }
 
-async function processProduct(product: InterfaceProductCsv): Promise<InterfaceProcessProduct> {
+function checkProductIsPackage(allProducts: InterfaceProductCsv[], new_price: number, productIsPackage): string {
+  const productMap = new Map<number, number>();
+
+  for (const packageItem of productIsPackage) {
+    const productId = Number(packageItem.product_id);
+    const quantity = Number(packageItem.qty);
+
+    const matchingProducts = allProducts.filter((p) => Number(p.product_code) === productId);
+
+    if (matchingProducts.length === 0) {
+      return `O produto é um pacote, portanto deve-se indicar a alteração do preço de todos os seus componentes (códigos ${productIsPackage
+        .map((item) => item.product_id)
+        .join(", ")}) no arquivo csv`;
+    }
+
+    for (const product of matchingProducts) {
+      const productPrice = Number(product.new_price);
+      const totalPrice = productPrice * quantity;
+
+      if (!productMap.has(productId)) {
+        productMap.set(productId, totalPrice);
+      } else {
+        productMap.set(productId, productMap.get(productId) + totalPrice);
+      }
+    }
+  }
+
+  let totalPriceProductsInPackage = 0;
+  for (const totalPrice of productMap.values()) {
+    totalPriceProductsInPackage += totalPrice;
+  }
+
+  if (totalPriceProductsInPackage !== new_price) {
+    return "A soma dos valores de venda dos produtos não totaliza o preço do pacote";
+  }
+
+  return "";
+}
+
+function checkProductContainsInPackage(allProducts: InterfaceProductCsv[], productContainInPackage): string {
+  const matchingProducts = allProducts.filter(
+    (p) => Number(p.product_code) === Number(productContainInPackage.pack_id),
+  );
+
+  if (matchingProducts.length === 0) {
+    return "O item faz parte de um pacote, portanto o arquivo csv deve indicar também a alteração do valor do pacote";
+  }
+
+  return "";
+}
+
+async function processProduct(product: InterfaceProductCsv, allProducts): Promise<InterfaceProcessProduct> {
   const new_price = Number(product.new_price);
   const product_code = Number(product.product_code);
 
-  const findProduct = await findProductByCode(product_code);
+  const findProduct = await productsRepository.findProductByCode(product_code);
 
   let messageError = "";
 
@@ -54,7 +86,20 @@ async function processProduct(product: InterfaceProductCsv): Promise<InterfacePr
   } else if (new_price < Number(findProduct.cost_price)) {
     messageError = "O preço de venda não pode ser menor que o preço de custo";
   } else {
-    messageError = isPriceWithinPercentMargin(new_price, Number(findProduct.sales_price));
+    messageError = checkPriceWithinPercentMargin(new_price, Number(findProduct.sales_price));
+  }
+
+  if (messageError.length === 0) {
+    const productIsPackage = await productsRepository.findPackageByProductCode(product_code);
+    const productContainInPackage = await productsRepository.findProductsInPackages(product_code);
+
+    if (productIsPackage.length > 0) {
+      messageError = checkProductIsPackage(allProducts, new_price, productIsPackage);
+    }
+
+    if (productContainInPackage) {
+      messageError = checkProductContainsInPackage(allProducts, productContainInPackage);
+    }
   }
 
   const processedProduct = {
@@ -80,7 +125,7 @@ async function checkProductsCodeAndPricesIsValid(csvData: Buffer): Promise<Inter
 
   const allProducts = await Promise.all(
     fileData.map(async (product) => {
-      return processProduct(product);
+      return processProduct(product, fileData);
     }),
   );
 
@@ -92,7 +137,7 @@ async function updateProducts(csvData: Buffer): Promise<void> {
 
   const allProducts = await Promise.all(
     fileData.map(async (product) => {
-      return processProduct(product);
+      return processProduct(product, fileData);
     }),
   );
 
@@ -103,10 +148,12 @@ async function updateProducts(csvData: Buffer): Promise<void> {
   } else {
     await Promise.all(
       allProducts.map(async (product) => {
-        return updateSalesPriceByProductCode(product.product_code, product.new_price);
+        return productsRepository.updateSalesPriceByProductCode(product.product_code, product.new_price);
       }),
     );
   }
 }
 
-export const uploadsService = { checkProductsCodeAndPricesIsValid, updateProducts };
+const uploadsService = { checkProductsCodeAndPricesIsValid, updateProducts };
+
+export default uploadsService;

@@ -1,7 +1,7 @@
+import uploadsService from "../services/uploads-service";
 import { FileRequest } from "./../middlewares/csv-validate-middleware";
 import { Response } from "express";
 import httpStatus from "http-status";
-import { uploadsService } from "@/services/uploads-service";
 
 export async function productsValidation(req: FileRequest, res: Response) {
   try {
